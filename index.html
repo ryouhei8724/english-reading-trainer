@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>英語読解スピード向上トレーナー</title>
+<style>
+:root {
+  --primary: #2563eb; --primary-light: #dbeafe; --primary-dark: #1d4ed8;
+  --success: #16a34a; --success-light: #dcfce7;
+  --warning: #f59e0b; --warning-light: #fef3c7;
+  --danger: #dc2626; --danger-light: #fee2e2;
+  --purple: #7c3aed; --purple-light: #ede9fe;
+  --bg: #f8fafc; --card: #ffffff; --text: #1e293b; --text-light: #64748b; --border: #e2e8f0;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Segoe UI', 'Meiryo UI', sans-serif; background: var(--bg); color: var(--text); }
+
+.header { background: linear-gradient(135deg, var(--primary), var(--purple)); color: white; padding: 20px 32px; }
+.header h1 { font-size: 20px; margin-bottom: 2px; }
+.header p { opacity: 0.85; font-size: 13px; }
+
+.container { max-width: 1000px; margin: 0 auto; padding: 20px 16px; }
+
+.stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
+.stat-card { background: var(--card); border-radius: 10px; padding: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); text-align: center; }
+.stat-card .label { font-size: 11px; color: var(--text-light); }
+.stat-card .value { font-size: 26px; font-weight: 700; color: var(--primary); }
+.stat-card .sub { font-size: 10px; color: var(--text-light); }
+
+.tabs { display: flex; gap: 4px; margin-bottom: 16px; flex-wrap: wrap; }
+.tab { padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; background: transparent; border: none; color: var(--text-light); transition: all 0.15s; }
+.tab.active { background: var(--primary); color: white; }
+.tab:hover:not(.active) { background: var(--primary-light); }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+.section { background: var(--card); border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); margin-bottom: 16px; }
+.section h2 { font-size: 16px; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+
+/* Reading area */
+.text-selector { display: flex; gap: 8px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; }
+.text-selector select { padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; font-family: inherit; flex: 1; min-width: 200px; }
+
+.reading-area {
+  background: #fefefe; border: 1px solid var(--border); border-radius: 10px; padding: 24px 28px;
+  font-size: 17px; line-height: 2; color: #1a1a1a; position: relative; min-height: 200px;
+  font-family: Georgia, 'Times New Roman', serif; letter-spacing: 0.01em;
+}
+.reading-area.blur-text .text-body { filter: blur(6px); user-select: none; transition: filter 0.3s; }
+.reading-area .text-meta { font-family: 'Segoe UI', 'Meiryo UI', sans-serif; font-size: 13px; color: var(--text-light); margin-bottom: 12px; display: flex; gap: 16px; flex-wrap: wrap; }
+.reading-area .text-meta span { background: var(--primary-light); padding: 2px 10px; border-radius: 12px; font-weight: 600; font-size: 12px; }
+
+.slash-mark { color: var(--primary); font-weight: 700; font-size: 18px; margin: 0 2px; }
+.chunk-highlight { background: var(--warning-light); border-radius: 3px; padding: 0 2px; }
+
+.reading-controls { display: flex; gap: 8px; margin-top: 16px; align-items: center; flex-wrap: wrap; }
+
+.timer-bar {
+  display: flex; align-items: center; gap: 12px; background: var(--primary-light); border-radius: 10px;
+  padding: 12px 20px; margin-bottom: 16px;
+}
+.timer-bar .timer-display { font-size: 32px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--primary); }
+.timer-bar .timer-label { font-size: 12px; color: var(--text-light); }
+
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 20px; border-radius: 8px; border: none; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+.btn-primary { background: var(--primary); color: white; }
+.btn-primary:hover { background: var(--primary-dark); }
+.btn-success { background: var(--success); color: white; }
+.btn-success:hover { background: #15803d; }
+.btn-warning { background: var(--warning); color: white; }
+.btn-purple { background: var(--purple); color: white; }
+.btn-outline { background: transparent; border: 2px solid var(--border); color: var(--text); }
+.btn-outline:hover { border-color: var(--primary); color: var(--primary); }
+.btn-sm { padding: 6px 14px; font-size: 12px; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Quiz */
+.quiz-area { display: none; margin-top: 20px; }
+.quiz-area.show { display: block; }
+.quiz-q { margin-bottom: 16px; padding: 14px; background: var(--bg); border-radius: 8px; }
+.quiz-q .q-label { font-size: 13px; font-weight: 700; color: var(--primary); margin-bottom: 6px; }
+.quiz-q .q-text { font-size: 14px; margin-bottom: 8px; }
+.quiz-options { display: flex; flex-direction: column; gap: 6px; }
+.quiz-opt { padding: 8px 12px; border: 2px solid var(--border); border-radius: 8px; cursor: pointer; font-size: 13px; transition: all 0.15s; text-align: left; background: white; }
+.quiz-opt:hover { border-color: var(--primary); background: var(--primary-light); }
+.quiz-opt.selected { border-color: var(--primary); background: var(--primary-light); font-weight: 600; }
+.quiz-opt.correct { border-color: var(--success); background: var(--success-light); }
+.quiz-opt.wrong { border-color: var(--danger); background: var(--danger-light); }
+
+.result-banner {
+  display: none; margin-top: 16px; padding: 20px; border-radius: 10px; text-align: center;
+  background: linear-gradient(135deg, var(--primary-light), var(--purple-light));
+}
+.result-banner.show { display: block; }
+.result-banner .big { font-size: 40px; font-weight: 700; color: var(--primary); }
+.result-banner .detail { font-size: 14px; color: var(--text-light); margin-top: 4px; }
+
+/* Phase bar */
+.phase-bar { display: flex; border-radius: 8px; overflow: hidden; height: 28px; margin-bottom: 6px; }
+.phase-bar div { display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: white; }
+.phase1 { background: #3b82f6; } .phase2 { background: #8b5cf6; } .phase3 { background: #ec4899; }
+.phase-labels { display: flex; font-size: 10px; color: var(--text-light); }
+.phase-labels span { flex: 1; }
+
+/* Chart */
+.chart-container { position: relative; height: 250px; }
+canvas { width: 100% !important; }
+
+/* History */
+.history-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.history-table th { text-align: left; padding: 8px; border-bottom: 2px solid var(--border); color: var(--text-light); }
+.history-table td { padding: 8px; border-bottom: 1px solid var(--border); }
+.history-table tr:hover { background: var(--primary-light); }
+.badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 600; }
+.badge-up { background: #dcfce7; color: #166534; }
+.badge-down { background: #fee2e2; color: #991b1b; }
+.badge-same { background: #f1f5f9; color: #475569; }
+
+/* Streak */
+.streak-display { display: flex; gap: 3px; flex-wrap: wrap; }
+.streak-day { width: 14px; height: 14px; border-radius: 3px; background: var(--border); }
+.streak-day.done { background: var(--success); }
+.streak-day.today { border: 2px solid var(--warning); }
+
+/* Instruction callout */
+.callout { padding: 12px 16px; border-radius: 8px; font-size: 13px; line-height: 1.6; margin-bottom: 14px; }
+.callout-blue { background: var(--primary-light); border-left: 4px solid var(--primary); }
+.callout-purple { background: var(--purple-light); border-left: 4px solid var(--purple); }
+
+.toggle-row { display: flex; gap: 8px; margin-bottom: 12px; align-items: center; flex-wrap: wrap; }
+.toggle-label { font-size: 12px; color: var(--text-light); }
+.toggle { position: relative; width: 40px; height: 22px; cursor: pointer; }
+.toggle input { opacity: 0; width: 0; height: 0; }
+.toggle .slider { position: absolute; inset: 0; background: var(--border); border-radius: 22px; transition: 0.2s; }
+.toggle .slider::before { content: ''; position: absolute; width: 16px; height: 16px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: 0.2s; }
+.toggle input:checked + .slider { background: var(--primary); }
+.toggle input:checked + .slider::before { transform: translateX(18px); }
+
+@media (max-width: 640px) {
+  .stats-row { grid-template-columns: repeat(2, 1fr); }
+  .reading-area { padding: 16px; font-size: 15px; }
+  .timer-bar .timer-display { font-size: 24px; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>英語読解スピード向上トレーナー</h1>
+  <p>涼平さんの3ヶ月チャレンジ（138 → 180 WPM）</p>
+</div>
+
+<div class="container">
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="label">現在のWPM</div>
+      <div class="value" id="currentWpm">138</div>
+      <div class="sub">目標: 180 WPM</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">学習日数</div>
+      <div class="value" id="totalDays">1</div>
+      <div class="sub" id="streakSub">連続: 1日</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">達成率</div>
+      <div class="value" id="progressPct">0%</div>
+      <div class="sub">138 → 180</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">残り日数</div>
+      <div class="value" id="daysLeft">92</div>
+      <div class="sub">2026/6/26まで</div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('reading',this)">📖 今日の英文</button>
+    <button class="tab" onclick="switchTab('chart',this)">📈 推移グラフ</button>
+    <button class="tab" onclick="switchTab('history',this)">📋 学習履歴</button>
+    <button class="tab" onclick="switchTab('streak',this)">🔥 継続記録</button>
+    <button class="tab" onclick="switchTab('phase',this)">📅 フェーズ</button>
+  </div>
+
+  <!-- ===== READING TAB ===== -->
+  <div id="tab-reading" class="tab-content active">
+    <div class="section">
+      <h2>📖 今日のリーディング</h2>
+
+      <div class="callout callout-blue" id="phaseInstruction"></div>
+
+      <div class="text-selector">
+        <select id="textSelect" onchange="loadText()"></select>
+        <button class="btn btn-outline btn-sm" onclick="loadRandomText()">ランダム選択</button>
+      </div>
+
+      <div class="toggle-row">
+        <label class="toggle"><input type="checkbox" id="slashToggle" onchange="renderText()"><span class="slider"></span></label>
+        <span class="toggle-label">スラッシュ表示</span>
+        <label class="toggle"><input type="checkbox" id="blurToggle" onchange="toggleBlur()"><span class="slider"></span></label>
+        <span class="toggle-label">テキスト非表示（タイマー開始で表示）</span>
+      </div>
+
+      <!-- Timer Bar -->
+      <div class="timer-bar">
+        <div>
+          <div class="timer-label">経過時間</div>
+          <div class="timer-display" id="timerDisplay">0:00.0</div>
+        </div>
+        <div style="flex:1"></div>
+        <button class="btn btn-primary" id="btnStart" onclick="startReading()">▶ 読み始める</button>
+        <button class="btn btn-success" id="btnStop" onclick="stopReading()" style="display:none">■ 読了</button>
+        <button class="btn btn-outline btn-sm" onclick="resetTimer()">リセット</button>
+      </div>
+
+      <!-- Reading Area -->
+      <div class="reading-area" id="readingArea">
+        <div class="text-meta" id="textMeta"></div>
+        <div class="text-body" id="textBody"></div>
+      </div>
+
+      <!-- Result Banner -->
+      <div class="result-banner" id="resultBanner">
+        <div>今回の計測結果</div>
+        <div class="big" id="resultWpm">—</div>
+        <div class="detail" id="resultDetail"></div>
+        <button class="btn btn-purple" style="margin-top:12px" onclick="showQuiz()">理解度チェックへ →</button>
+      </div>
+
+      <!-- Quiz Area -->
+      <div class="quiz-area" id="quizArea"></div>
+
+      <!-- Save -->
+      <div id="saveArea" style="display:none;text-align:center;margin-top:16px">
+        <button class="btn btn-success" onclick="saveSession()">この記録を保存する</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== CHART TAB ===== -->
+  <div id="tab-chart" class="tab-content">
+    <div class="section">
+      <h2>📈 WPM推移グラフ</h2>
+      <div class="chart-container"><canvas id="wpmChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- ===== HISTORY TAB ===== -->
+  <div id="tab-history" class="tab-content">
+    <div class="section">
+      <h2>📋 学習履歴</h2>
+      <table class="history-table">
+        <thead><tr><th>日付</th><th>Day</th><th>WPM</th><th>理解度</th><th>トピック</th></tr></thead>
+        <tbody id="historyBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ===== STREAK TAB ===== -->
+  <div id="tab-streak" class="tab-content">
+    <div class="section">
+      <h2>🔥 継続記録</h2>
+      <p style="font-size:12px;color:var(--text-light);margin-bottom:10px;">緑=学習した日 / 黄枠=今日</p>
+      <div class="streak-display" id="streakDisplay"></div>
+    </div>
+  </div>
+
+  <!-- ===== PHASE TAB ===== -->
+  <div id="tab-phase" class="tab-content">
+    <div class="section">
+      <h2>📅 3ヶ月計画</h2>
+      <div class="phase-bar">
+        <div class="phase1" style="width:33.3%">1ヶ月目: スラッシュ</div>
+        <div class="phase2" style="width:33.3%">2ヶ月目: チャンク</div>
+        <div class="phase3" style="width:33.4%">3ヶ月目: 多読</div>
+      </div>
+      <div class="phase-labels"><span>3/26</span><span style="text-align:center">4/26</span><span style="text-align:center">5/26</span><span style="text-align:right">6/26</span></div>
+      <div style="margin-top:16px">
+        <div class="callout callout-blue"><strong>1ヶ月目（〜4/26）: スラッシュリーディング</strong><br>意味のカタマリごとにスラッシュで区切り、英語の語順のまま前から理解する訓練。絶対に返り読みしない。</div>
+        <div class="callout callout-purple"><strong>2ヶ月目（〜5/26）: チャンクリーディング＋語彙強化</strong><br>スラッシュの幅を広げ、一度に捉える語数を増やす。頻出専門語彙をストック。</div>
+        <div class="callout callout-blue"><strong>3ヶ月目（〜6/26）: タイムアタック＋多読</strong><br>制限時間を設けてスキミング→精読。長めのドキュメントで実践力を磨く。</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+// =====================
+// READING TEXTS DATABASE
+// =====================
+const TEXTS = [
+  {
+    id: 'day0_quantum',
+    day: 0,
+    title: 'The Dawn of Commercial Quantum Computing',
+    topic: 'Quantum Computing',
+    wordCount: 300,
+    difficulty: 'intermediate',
+    // Plain text (no slashes)
+    plain: `Quantum computing is rapidly transitioning from a theoretical concept in physics laboratories to a practical tool for the modern world. Unlike classical computers that rely on standard bits representing either a zero or a one, quantum computers utilize quantum bits, known as qubits. This unique characteristic allows qubits to exist in multiple states simultaneously, a property called superposition. Consequently, these advanced machines can process massive amounts of complex data at unprecedented speeds.
+
+Several specialized technology startups and established tech giants are currently racing to build scalable and reliable quantum systems. These powerful machines possess the potential to revolutionize numerous industries. In the realm of material science and manufacturing, for example, quantum algorithms could significantly accelerate the discovery of new, lightweight alloys. This would directly benefit advanced fabrication methods, including next-generation 3D printing, by making production processes faster, cheaper, and far more sustainable.
+
+The financial sector is also monitoring these developments very closely. Quantum computing holds the promise of optimizing complex investment portfolios, improving real-time risk analysis, and enhancing fraud detection systems much faster than today's best supercomputers. As hardware companies achieve critical milestones in qubit stability and error correction, the true commercial viability of these systems becomes clearer. This progress naturally attracts significant attention from forward-thinking investors who are searching for the next major leap in technology.
+
+Despite this excitement, widespread commercial adoption still faces significant hurdles. Quantum processors are extraordinarily sensitive to their surrounding environment and typically require extreme, near-absolute zero temperatures to function correctly without losing data. Researchers worldwide are actively working to overcome these physical and engineering limitations. Over the next decade, we can expect to see quantum computers successfully tackling specific, highly complex problems, likely operating alongside traditional computers in a hybrid cloud infrastructure.`,
+    // Slash-annotated version
+    slashed: `Quantum computing / is rapidly transitioning / from a theoretical concept / in physics laboratories / to a practical tool / for the modern world. / Unlike classical computers / that rely on standard bits / representing either a zero or a one, / quantum computers utilize quantum bits, / known as qubits. / This unique characteristic / allows qubits / to exist in multiple states simultaneously, / a property called superposition. / Consequently, / these advanced machines / can process massive amounts / of complex data / at unprecedented speeds.
+
+Several specialized technology startups / and established tech giants / are currently racing / to build scalable and reliable quantum systems. / These powerful machines / possess the potential / to revolutionize numerous industries. / In the realm of material science and manufacturing, / for example, / quantum algorithms / could significantly accelerate / the discovery of new, lightweight alloys. / This would directly benefit / advanced fabrication methods, / including next-generation 3D printing, / by making production processes / faster, cheaper, and far more sustainable.
+
+The financial sector / is also monitoring these developments / very closely. / Quantum computing / holds the promise / of optimizing complex investment portfolios, / improving real-time risk analysis, / and enhancing fraud detection systems / much faster than today's best supercomputers. / As hardware companies / achieve critical milestones / in qubit stability and error correction, / the true commercial viability / of these systems becomes clearer. / This progress / naturally attracts significant attention / from forward-thinking investors / who are searching / for the next major leap in technology.
+
+Despite this excitement, / widespread commercial adoption / still faces significant hurdles. / Quantum processors / are extraordinarily sensitive / to their surrounding environment / and typically require / extreme, near-absolute zero temperatures / to function correctly / without losing data. / Researchers worldwide / are actively working / to overcome these physical and engineering limitations. / Over the next decade, / we can expect to see / quantum computers / successfully tackling specific, highly complex problems, / likely operating alongside traditional computers / in a hybrid cloud infrastructure.`,
+    quiz: [
+      { q: '量子ビットが「同時に複数の状態に存在できる」特性を何と呼びますか？',
+        opts: ['Entanglement', 'Superposition', 'Quantum tunneling', 'Decoherence'], correct: 1 },
+      { q: '量子アルゴリズムが製造業にもたらすメリットとして述べられているのは？',
+        opts: ['コスト削減のみ', '新しい軽量合金の発見を加速', '従業員の削減', '工場の自動化'], correct: 1 },
+      { q: '金融セクターが期待する量子コンピューティングの用途はどれですか？（2つ以上該当）',
+        opts: ['リアルタイムリスク分析と不正検知', '仮想通貨のマイニング', '投資ポートフォリオの最適化', '銀行窓口の自動化'], correct: 0 },
+      { q: '量子プロセッサの商用化を妨げる物理的課題は？',
+        opts: ['電力消費が大きすぎる', '絶対零度に近い極低温が必要', 'インターネット接続が必要', 'サイズが大きすぎる'], correct: 1 }
+    ]
+  },
+  {
+    id: 'day1_ai_healthcare',
+    day: 1,
+    title: 'Artificial Intelligence Reshaping Modern Healthcare',
+    topic: 'AI in Healthcare',
+    wordCount: 285,
+    difficulty: 'intermediate',
+    plain: `Artificial intelligence is fundamentally changing the way medical professionals diagnose and treat diseases across the globe. Machine learning algorithms can now analyze medical imaging data, such as X-rays and MRI scans, with remarkable accuracy that sometimes surpasses human radiologists. These systems detect subtle patterns and anomalies that the human eye might easily miss during routine examinations.
+
+One particularly promising application involves early cancer detection. AI-powered diagnostic tools can identify microscopic changes in tissue samples months before traditional methods would raise any concern. This early detection capability dramatically improves patient survival rates and reduces the overall cost of treatment by catching diseases at their most treatable stages.
+
+Beyond diagnostics, artificial intelligence is revolutionizing drug discovery processes. Pharmaceutical companies are using deep learning models to predict how different molecular structures will interact with specific biological targets in the human body. This computational approach significantly reduces the time and expense required to bring new medications from the laboratory bench to the pharmacy shelf, potentially cutting years from the traditional development timeline.
+
+However, integrating AI into healthcare systems presents several important challenges. Patient data privacy remains a critical concern, as these systems require access to vast amounts of sensitive medical information to function effectively. Additionally, healthcare providers must address the issue of algorithmic bias, ensuring that AI tools perform equally well across diverse patient populations regardless of age, gender, or ethnic background.
+
+Despite these obstacles, the global investment in healthcare AI continues to accelerate. Industry analysts predict that AI-driven medical technologies will become standard tools in hospitals and clinics within the next five years, transforming patient care and making precision medicine accessible to millions of people worldwide.`,
+    slashed: `Artificial intelligence / is fundamentally changing / the way medical professionals / diagnose and treat diseases / across the globe. / Machine learning algorithms / can now analyze medical imaging data, / such as X-rays and MRI scans, / with remarkable accuracy / that sometimes surpasses human radiologists. / These systems detect subtle patterns / and anomalies / that the human eye / might easily miss / during routine examinations.
+
+One particularly promising application / involves early cancer detection. / AI-powered diagnostic tools / can identify microscopic changes / in tissue samples / months before traditional methods / would raise any concern. / This early detection capability / dramatically improves patient survival rates / and reduces the overall cost of treatment / by catching diseases / at their most treatable stages.
+
+Beyond diagnostics, / artificial intelligence / is revolutionizing drug discovery processes. / Pharmaceutical companies / are using deep learning models / to predict how different molecular structures / will interact with specific biological targets / in the human body. / This computational approach / significantly reduces the time and expense / required to bring new medications / from the laboratory bench / to the pharmacy shelf, / potentially cutting years / from the traditional development timeline.
+
+However, / integrating AI into healthcare systems / presents several important challenges. / Patient data privacy / remains a critical concern, / as these systems require access / to vast amounts of sensitive medical information / to function effectively. / Additionally, / healthcare providers must address / the issue of algorithmic bias, / ensuring that AI tools perform equally well / across diverse patient populations / regardless of age, gender, or ethnic background.
+
+Despite these obstacles, / the global investment in healthcare AI / continues to accelerate. / Industry analysts predict / that AI-driven medical technologies / will become standard tools / in hospitals and clinics / within the next five years, / transforming patient care / and making precision medicine / accessible to millions of people worldwide.`,
+    quiz: [
+      { q: 'AIが医療画像分析で人間の放射線科医を上回ることがあるのはなぜですか？',
+        opts: ['処理速度が速いから', '微妙なパターンや異常を検出できるから', 'コストが安いから', '24時間稼働できるから'], correct: 1 },
+      { q: 'AI早期がん検出の最大のメリットは？',
+        opts: ['手術が不要になる', '従来法より数ヶ月早く微小変化を発見できる', '費用がゼロになる', '入院期間が短くなる'], correct: 1 },
+      { q: '製薬会社がAIを使う目的は？',
+        opts: ['薬の価格を下げる', '分子構造と生物学的ターゲットの相互作用を予測する', '臨床試験の参加者を募る', '薬のパッケージをデザインする'], correct: 1 },
+      { q: 'ヘルスケアAIの課題として挙げられていないものは？',
+        opts: ['患者データのプライバシー', 'アルゴリズムバイアス', '電力消費の増大', '多様な患者集団での公平性'], correct: 2 }
+    ]
+  },
+  {
+    id: 'day2_ev_battery',
+    day: 2,
+    title: 'Next-Generation Battery Technology for Electric Vehicles',
+    topic: 'EV Battery Tech',
+    wordCount: 290,
+    difficulty: 'intermediate',
+    plain: `The electric vehicle industry is entering a transformative period driven by remarkable advances in battery technology. Solid-state batteries represent the most anticipated breakthrough, replacing the liquid electrolyte found in conventional lithium-ion cells with a solid material. This fundamental change promises higher energy density, faster charging times, and significantly improved safety by eliminating the flammable liquid component that has caused concerns in current battery designs.
+
+Major automotive manufacturers and dedicated battery startups are investing billions of dollars into solid-state research and development. Toyota has announced plans to begin mass production of solid-state batteries by the late 2020s, while several Silicon Valley companies claim they have already demonstrated working prototypes in laboratory conditions. The race to commercialize this technology has become one of the most competitive battles in the entire automotive industry.
+
+Meanwhile, improvements in existing lithium-ion technology continue to deliver meaningful gains. New cathode materials using lithium iron phosphate are making batteries cheaper and longer-lasting without relying on expensive cobalt. These incremental improvements are helping current electric vehicles achieve driving ranges that increasingly match or exceed those of traditional gasoline-powered cars, reducing one of the biggest barriers to widespread consumer adoption.
+
+The environmental impact of battery production also demands serious attention. Mining lithium and other critical minerals creates significant ecological damage in regions where extraction takes place. Companies are now developing advanced recycling processes that can recover over ninety percent of valuable materials from spent batteries, creating a more circular and sustainable supply chain for the growing electric vehicle market.
+
+Industry experts believe that continued innovation in battery chemistry will ultimately make electric vehicles cheaper than their gasoline counterparts within this decade, fundamentally reshaping global transportation patterns and accelerating the transition to cleaner energy systems.`,
+    slashed: `The electric vehicle industry / is entering a transformative period / driven by remarkable advances / in battery technology. / Solid-state batteries / represent the most anticipated breakthrough, / replacing the liquid electrolyte / found in conventional lithium-ion cells / with a solid material. / This fundamental change / promises higher energy density, / faster charging times, / and significantly improved safety / by eliminating the flammable liquid component / that has caused concerns / in current battery designs.
+
+Major automotive manufacturers / and dedicated battery startups / are investing billions of dollars / into solid-state research and development. / Toyota has announced plans / to begin mass production / of solid-state batteries / by the late 2020s, / while several Silicon Valley companies / claim they have already demonstrated / working prototypes / in laboratory conditions. / The race to commercialize this technology / has become one of the most competitive battles / in the entire automotive industry.
+
+Meanwhile, / improvements in existing lithium-ion technology / continue to deliver meaningful gains. / New cathode materials / using lithium iron phosphate / are making batteries cheaper and longer-lasting / without relying on expensive cobalt. / These incremental improvements / are helping current electric vehicles / achieve driving ranges / that increasingly match or exceed / those of traditional gasoline-powered cars, / reducing one of the biggest barriers / to widespread consumer adoption.
+
+The environmental impact / of battery production / also demands serious attention. / Mining lithium and other critical minerals / creates significant ecological damage / in regions where extraction takes place. / Companies are now developing / advanced recycling processes / that can recover over ninety percent / of valuable materials / from spent batteries, / creating a more circular and sustainable supply chain / for the growing electric vehicle market.
+
+Industry experts believe / that continued innovation in battery chemistry / will ultimately make electric vehicles / cheaper than their gasoline counterparts / within this decade, / fundamentally reshaping global transportation patterns / and accelerating the transition / to cleaner energy systems.`,
+    quiz: [
+      { q: '固体電池が従来のリチウムイオン電池と異なる最大のポイントは？',
+        opts: ['サイズが小さい', '液体電解質を固体材料に置き換える', '充電不要', '太陽光で充電可能'], correct: 1 },
+      { q: 'Toyotaの固体電池に関する計画は？',
+        opts: ['2025年に発売', '2020年代後半に量産開始', '研究を中止', '他社と共同開発'], correct: 1 },
+      { q: 'リン酸鉄リチウム（LFP）正極材の利点は？',
+        opts: ['エネルギー密度が最も高い', '高価なコバルトに依存せず安価で長寿命', '充電時間がゼロ', '重量が半分'], correct: 1 },
+      { q: 'バッテリーリサイクルで回収できる有価物質の割合は？',
+        opts: ['約50%', '約70%', '90%以上', '100%'], correct: 2 }
+    ]
+  },
+  {
+    id: 'day3_cybersec',
+    day: 3,
+    title: 'Zero Trust Architecture: The Future of Cybersecurity',
+    topic: 'Cybersecurity',
+    wordCount: 280,
+    difficulty: 'intermediate',
+    plain: `Traditional cybersecurity models operated on a simple principle: trust everything inside the corporate network and block everything outside. However, the rapid growth of remote work, cloud computing, and sophisticated cyber attacks has completely undermined this approach. Zero Trust architecture represents a fundamental shift in security thinking, operating on the principle that no user, device, or network connection should be automatically trusted regardless of its location.
+
+Under the Zero Trust framework, every access request must be continuously verified through multiple authentication factors before granting permission to any resource. This means that even employees sitting at their desks inside the company headquarters must prove their identity and authorization level each time they attempt to access sensitive systems or data. The system constantly monitors user behavior patterns and can immediately revoke access if it detects any suspicious activity.
+
+Major technology companies have already adopted Zero Trust principles across their organizations. Google pioneered this approach with its BeyondCorp initiative, which eliminated the traditional VPN-based perimeter security model entirely. Microsoft and Amazon Web Services have since developed their own comprehensive Zero Trust platforms, making this security architecture accessible to businesses of all sizes through cloud-based solutions.
+
+Implementing Zero Trust requires significant investment in identity management systems, network segmentation tools, and advanced analytics platforms. Organizations must also invest heavily in employee training, as the transition fundamentally changes how people interact with corporate technology daily. Despite these initial costs, companies report dramatic reductions in security breaches and data loss incidents after adopting Zero Trust frameworks.
+
+As cyber threats continue to evolve in complexity, security experts universally agree that Zero Trust will become the standard approach for protecting digital assets in both enterprise and government environments within the coming years.`,
+    slashed: `Traditional cybersecurity models / operated on a simple principle: / trust everything inside the corporate network / and block everything outside. / However, / the rapid growth of remote work, / cloud computing, / and sophisticated cyber attacks / has completely undermined this approach. / Zero Trust architecture / represents a fundamental shift / in security thinking, / operating on the principle / that no user, device, or network connection / should be automatically trusted / regardless of its location.
+
+Under the Zero Trust framework, / every access request / must be continuously verified / through multiple authentication factors / before granting permission / to any resource. / This means / that even employees / sitting at their desks / inside the company headquarters / must prove their identity / and authorization level / each time they attempt to access / sensitive systems or data. / The system constantly monitors / user behavior patterns / and can immediately revoke access / if it detects any suspicious activity.
+
+Major technology companies / have already adopted Zero Trust principles / across their organizations. / Google pioneered this approach / with its BeyondCorp initiative, / which eliminated / the traditional VPN-based perimeter security model / entirely. / Microsoft and Amazon Web Services / have since developed / their own comprehensive Zero Trust platforms, / making this security architecture accessible / to businesses of all sizes / through cloud-based solutions.
+
+Implementing Zero Trust / requires significant investment / in identity management systems, / network segmentation tools, / and advanced analytics platforms. / Organizations must also invest heavily / in employee training, / as the transition fundamentally changes / how people interact / with corporate technology daily. / Despite these initial costs, / companies report dramatic reductions / in security breaches and data loss incidents / after adopting Zero Trust frameworks.
+
+As cyber threats / continue to evolve in complexity, / security experts universally agree / that Zero Trust / will become the standard approach / for protecting digital assets / in both enterprise and government environments / within the coming years.`,
+    quiz: [
+      { q: '従来のサイバーセキュリティモデルの基本原則は？',
+        opts: ['すべてを疑う', '社内ネットワーク内は信頼し外部をブロック', 'パスワードのみで管理', 'AIで自動防御'], correct: 1 },
+      { q: 'Zero Trustの中核原則は？',
+        opts: ['社内ユーザーは信頼する', 'VPNを使えば安全', 'ユーザー・デバイス・接続を自動的に信頼しない', 'ファイアウォールを強化する'], correct: 2 },
+      { q: 'GoogleがZero Trustを先導したイニシアチブの名前は？',
+        opts: ['Google Shield', 'BeyondCorp', 'TrustZero', 'SecureNet'], correct: 1 },
+      { q: 'Zero Trust導入後の効果として報告されているのは？',
+        opts: ['コスト増加のみ', 'セキュリティ侵害とデータ損失の劇的な減少', '従業員満足度の低下', 'ネットワーク速度の向上'], correct: 1 }
+    ]
+  },
+  {
+    id: 'day4_space',
+    day: 4,
+    title: 'The Commercial Space Economy Takes Flight',
+    topic: 'Space Industry',
+    wordCount: 295,
+    difficulty: 'intermediate',
+    plain: `The commercial space industry has evolved far beyond government-funded rocket launches into a thriving private sector economy worth hundreds of billions of dollars. SpaceX has dramatically reduced the cost of reaching orbit through its reusable Falcon 9 rockets, which land themselves back on Earth after delivering their payloads to space. This single innovation has fundamentally disrupted the economics of the entire space launch industry and opened doors for countless new business opportunities.
+
+Satellite technology represents the largest segment of the current space economy. Thousands of small satellites now orbit the Earth, providing essential services including global internet connectivity, precision agriculture monitoring, climate change tracking, and real-time supply chain visibility. Companies like Planet Labs operate hundreds of Earth observation satellites that capture daily images of the entire planet's surface, creating valuable data products for governments, businesses, and researchers.
+
+Space tourism is also transitioning from science fiction into commercial reality. Blue Origin and Virgin Galactic have already carried paying passengers on suborbital flights, offering several minutes of weightlessness and breathtaking views of Earth from the edge of space. While current ticket prices remain accessible only to wealthy individuals, industry leaders expect costs to decrease substantially as launch frequency increases and competition intensifies.
+
+Looking further ahead, asteroid mining and orbital manufacturing represent potentially enormous economic opportunities. Certain asteroids contain trillions of dollars worth of precious metals and rare earth elements. Several startups are developing robotic spacecraft designed to prospect and eventually extract these extraterrestrial resources, although significant technical challenges remain before commercial operations become feasible.
+
+The growing commercialization of space is also creating entirely new categories of jobs and investment opportunities. Financial analysts increasingly view space technology companies as attractive long-term investments, comparable to the early days of the internet when entirely new industries emerged from fundamental technological breakthroughs.`,
+    slashed: `The commercial space industry / has evolved far beyond / government-funded rocket launches / into a thriving private sector economy / worth hundreds of billions of dollars. / SpaceX has dramatically reduced / the cost of reaching orbit / through its reusable Falcon 9 rockets, / which land themselves back on Earth / after delivering their payloads to space. / This single innovation / has fundamentally disrupted / the economics of the entire space launch industry / and opened doors / for countless new business opportunities.
+
+Satellite technology / represents the largest segment / of the current space economy. / Thousands of small satellites / now orbit the Earth, / providing essential services / including global internet connectivity, / precision agriculture monitoring, / climate change tracking, / and real-time supply chain visibility. / Companies like Planet Labs / operate hundreds of Earth observation satellites / that capture daily images / of the entire planet's surface, / creating valuable data products / for governments, businesses, and researchers.
+
+Space tourism / is also transitioning / from science fiction / into commercial reality. / Blue Origin and Virgin Galactic / have already carried paying passengers / on suborbital flights, / offering several minutes of weightlessness / and breathtaking views of Earth / from the edge of space. / While current ticket prices / remain accessible only to wealthy individuals, / industry leaders expect costs / to decrease substantially / as launch frequency increases / and competition intensifies.
+
+Looking further ahead, / asteroid mining and orbital manufacturing / represent potentially enormous economic opportunities. / Certain asteroids / contain trillions of dollars worth / of precious metals and rare earth elements. / Several startups / are developing robotic spacecraft / designed to prospect / and eventually extract / these extraterrestrial resources, / although significant technical challenges remain / before commercial operations become feasible.
+
+The growing commercialization of space / is also creating entirely new categories / of jobs and investment opportunities. / Financial analysts / increasingly view space technology companies / as attractive long-term investments, / comparable to the early days of the internet / when entirely new industries emerged / from fundamental technological breakthroughs.`,
+    quiz: [
+      { q: 'SpaceXがコスト削減を実現した主な技術革新は？',
+        opts: ['小型ロケットの開発', '再利用可能なFalcon 9ロケット', '原子力推進', '3Dプリント製ロケット'], correct: 1 },
+      { q: '現在の宇宙経済で最大のセグメントは？',
+        opts: ['宇宙観光', '衛星技術', '小惑星採掘', '宇宙ステーション'], correct: 1 },
+      { q: 'Planet Labs社が提供するサービスは？',
+        opts: ['宇宙旅行チケット販売', '地球表面の毎日の画像を撮影するデータ製品', 'ロケット製造', '宇宙通信'], correct: 1 },
+      { q: '小惑星採掘が注目される理由は？',
+        opts: ['エネルギー資源がある', '数兆ドル相当の貴金属やレアアースを含む', '居住可能', '水が豊富'], correct: 1 }
+    ]
+  },
+  {
+    id: 'day5_3dprint',
+    day: 5,
+    title: 'Industrial 3D Printing Enters the Production Line',
+    topic: '3D Printing / Additive Manufacturing',
+    wordCount: 290,
+    difficulty: 'intermediate',
+    plain: `Three-dimensional printing technology has matured beyond rapid prototyping into a legitimate manufacturing method for producing end-use parts at industrial scale. Aerospace companies like Boeing and Airbus now use metal 3D printing to fabricate complex structural components that are lighter and stronger than traditionally manufactured alternatives. These additively manufactured parts reduce aircraft weight, directly improving fuel efficiency and lowering carbon emissions per flight.
+
+The medical device industry has embraced 3D printing with particular enthusiasm. Custom titanium implants, perfectly matched to individual patient anatomy through detailed CT scan data, are now routinely produced for complex surgical procedures. Dental laboratories use high-speed resin printers to create crowns, bridges, and clear aligners in a fraction of the time required by conventional fabrication methods, dramatically reducing both cost and patient waiting times.
+
+Material science breakthroughs are continuously expanding the range of substances that can be 3D printed. Advanced ceramic materials suitable for extreme temperature environments, flexible electronics printed directly onto fabric substrates, and even biocompatible scaffolds that support living cell growth represent the cutting edge of additive manufacturing research. These material innovations are opening entirely new application domains that were previously impossible with traditional manufacturing techniques.
+
+However, several barriers still limit broader industrial adoption. Print speeds remain significantly slower than injection molding or machining for high-volume production runs. Quality consistency across large batches requires sophisticated monitoring systems that add cost and complexity to the manufacturing process. Additionally, the lack of comprehensive industry standards for 3D printed parts creates certification challenges in safety-critical applications.
+
+Despite these limitations, market researchers project the industrial 3D printing sector will grow at over twenty percent annually through the end of this decade, driven by continuous improvements in speed, material capabilities, and cost efficiency that make additive manufacturing increasingly competitive with established production methods.`,
+    slashed: `Three-dimensional printing technology / has matured beyond rapid prototyping / into a legitimate manufacturing method / for producing end-use parts / at industrial scale. / Aerospace companies / like Boeing and Airbus / now use metal 3D printing / to fabricate complex structural components / that are lighter and stronger / than traditionally manufactured alternatives. / These additively manufactured parts / reduce aircraft weight, / directly improving fuel efficiency / and lowering carbon emissions per flight.
+
+The medical device industry / has embraced 3D printing / with particular enthusiasm. / Custom titanium implants, / perfectly matched to individual patient anatomy / through detailed CT scan data, / are now routinely produced / for complex surgical procedures. / Dental laboratories / use high-speed resin printers / to create crowns, bridges, and clear aligners / in a fraction of the time / required by conventional fabrication methods, / dramatically reducing both cost / and patient waiting times.
+
+Material science breakthroughs / are continuously expanding / the range of substances / that can be 3D printed. / Advanced ceramic materials / suitable for extreme temperature environments, / flexible electronics / printed directly onto fabric substrates, / and even biocompatible scaffolds / that support living cell growth / represent the cutting edge / of additive manufacturing research. / These material innovations / are opening entirely new application domains / that were previously impossible / with traditional manufacturing techniques.
+
+However, / several barriers / still limit broader industrial adoption. / Print speeds remain significantly slower / than injection molding or machining / for high-volume production runs. / Quality consistency across large batches / requires sophisticated monitoring systems / that add cost and complexity / to the manufacturing process. / Additionally, / the lack of comprehensive industry standards / for 3D printed parts / creates certification challenges / in safety-critical applications.
+
+Despite these limitations, / market researchers project / the industrial 3D printing sector / will grow at over twenty percent annually / through the end of this decade, / driven by continuous improvements / in speed, material capabilities, and cost efficiency / that make additive manufacturing / increasingly competitive / with established production methods.`,
+    quiz: [
+      { q: 'Boeing/Airbusが3Dプリントを使う主な理由は？',
+        opts: ['見た目が良い', '軽量で強度の高い構造部品を製造でき燃費が向上する', '3Dプリンターが安い', '労働者が不足している'], correct: 1 },
+      { q: '医療分野でのカスタムチタンインプラントはどうやって設計される？',
+        opts: ['医師の経験から', 'CTスキャンデータで個人の解剖学的構造に合わせる', '標準サイズから選択', 'AIが自動設計'], correct: 1 },
+      { q: '3Dプリントの産業普及を妨げる要因として挙げられていないのは？',
+        opts: ['印刷速度の遅さ', '大量生産時の品質一貫性', '包括的な業界標準の欠如', '材料の不足'], correct: 3 },
+      { q: '産業用3Dプリント市場の年間成長率予測は？',
+        opts: ['約5%', '約10%', '20%以上', '50%以上'], correct: 2 }
+    ]
+  },
+  {
+    id: 'day6_blockchain',
+    day: 6,
+    title: 'Blockchain Beyond Cryptocurrency: Enterprise Applications',
+    topic: 'Blockchain / Enterprise',
+    wordCount: 285,
+    difficulty: 'intermediate',
+    plain: `Blockchain technology has evolved significantly beyond its origins in cryptocurrency, finding practical applications across numerous enterprise sectors. Supply chain management represents one of the most compelling use cases, where blockchain provides an immutable record of every transaction and movement of goods from raw materials to final delivery. Major retailers like Walmart use blockchain systems to trace food products back to their source farms within seconds, a process that previously required days of manual investigation.
+
+The financial services industry is leveraging blockchain to streamline cross-border payments and trade finance operations. Traditional international wire transfers often take several business days and involve multiple intermediary banks, each adding fees and processing delays. Blockchain-based payment networks can settle these same transactions in minutes at a fraction of the cost, eliminating unnecessary intermediaries and reducing the risk of errors during the transfer process.
+
+Healthcare organizations are exploring blockchain for managing patient medical records securely across different hospital systems. Rather than maintaining separate databases that rarely communicate with each other, a blockchain-based system allows authorized healthcare providers to access a patient's complete medical history instantly while maintaining strict privacy controls. This interoperability could prevent dangerous medication errors and eliminate redundant diagnostic procedures.
+
+Intellectual property management is another promising application area. Artists, musicians, and content creators can register their work on blockchain platforms that create permanent, timestamped proof of ownership. Smart contracts built on these platforms can automatically distribute royalty payments each time protected content is used or licensed, ensuring creators receive fair compensation without relying on intermediary organizations.
+
+Despite growing enterprise adoption, blockchain technology still faces challenges including energy consumption concerns, scalability limitations for high-volume transaction processing, and the need for clearer regulatory frameworks that provide legal certainty for blockchain-based agreements and digital assets.`,
+    slashed: `Blockchain technology / has evolved significantly / beyond its origins in cryptocurrency, / finding practical applications / across numerous enterprise sectors. / Supply chain management / represents one of the most compelling use cases, / where blockchain provides / an immutable record / of every transaction and movement of goods / from raw materials to final delivery. / Major retailers like Walmart / use blockchain systems / to trace food products / back to their source farms / within seconds, / a process that previously required / days of manual investigation.
+
+The financial services industry / is leveraging blockchain / to streamline cross-border payments / and trade finance operations. / Traditional international wire transfers / often take several business days / and involve multiple intermediary banks, / each adding fees and processing delays. / Blockchain-based payment networks / can settle these same transactions / in minutes / at a fraction of the cost, / eliminating unnecessary intermediaries / and reducing the risk of errors / during the transfer process.
+
+Healthcare organizations / are exploring blockchain / for managing patient medical records / securely across different hospital systems. / Rather than maintaining separate databases / that rarely communicate with each other, / a blockchain-based system / allows authorized healthcare providers / to access a patient's complete medical history / instantly / while maintaining strict privacy controls. / This interoperability / could prevent dangerous medication errors / and eliminate redundant diagnostic procedures.
+
+Intellectual property management / is another promising application area. / Artists, musicians, and content creators / can register their work / on blockchain platforms / that create permanent, timestamped proof of ownership. / Smart contracts / built on these platforms / can automatically distribute royalty payments / each time protected content is used or licensed, / ensuring creators receive fair compensation / without relying on intermediary organizations.
+
+Despite growing enterprise adoption, / blockchain technology / still faces challenges / including energy consumption concerns, / scalability limitations / for high-volume transaction processing, / and the need for clearer regulatory frameworks / that provide legal certainty / for blockchain-based agreements and digital assets.`,
+    quiz: [
+      { q: 'Walmartがブロックチェーンを使う目的は？',
+        opts: ['仮想通貨の決済', '食品の生産元を数秒で追跡する', '従業員の勤怠管理', '広告配信の最適化'], correct: 1 },
+      { q: '国際送金でブロックチェーンが解決する問題は？',
+        opts: ['為替レートの変動', '数日かかる処理時間と複数の仲介銀行の手数料', '通貨の種類が多い', '言語の壁'], correct: 1 },
+      { q: 'ヘルスケアでのブロックチェーン活用で防げるリスクは？',
+        opts: ['院内感染', '危険な投薬ミスと重複した診断手続き', '医師不足', '保険料の高騰'], correct: 1 },
+      { q: 'スマートコントラクトがクリエイターに提供するメリットは？',
+        opts: ['作品の自動制作', '著作権の自動登録とロイヤリティの自動分配', '無料で配信できる', 'AI生成コンテンツの検出'], correct: 1 }
+    ]
+  }
+];
+
+// =====================
+// STATE
+// =====================
+let progressData = {
+  project: { start_date: "2026-03-26", end_date: "2026-06-26", target_wpm: 180 },
+  baseline: { wpm: 138 },
+  sessions: [
+    { date: "2026-03-26", day: 1, phase: "アセスメント", wpm: 138, comprehension_score: 100,
+      text_topic: "The Dawn of Commercial Quantum Computing", word_count: 300 }
+  ]
+};
+
+let timerInterval = null, startTime = null, elapsedMs = 0;
+let currentText = null, currentWpm = 0, quizScore = 0;
+
+// =====================
+// INIT
+// =====================
+window.addEventListener('DOMContentLoaded', () => {
+  populateTextSelector();
+  loadText();
+  updateDashboard();
+  updatePhaseInstruction();
+});
+
+function populateTextSelector() {
+  const sel = document.getElementById('textSelect');
+  sel.innerHTML = '';
+  TEXTS.forEach((t, i) => {
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = `Day ${t.day}: ${t.title} (${t.wordCount}語)`;
+    sel.appendChild(opt);
+  });
+  // Default to day based on project day
+  const projDay = Math.floor((new Date() - new Date('2026-03-26')) / 86400000);
+  const idx = TEXTS.findIndex(t => t.day === projDay);
+  if (idx >= 0) sel.value = idx;
+}
+
+function loadText() {
+  const idx = document.getElementById('textSelect').value;
+  currentText = TEXTS[idx];
+  document.getElementById('wordCount_hidden') && (document.getElementById('wordCount_hidden').value = currentText.wordCount);
+  renderText();
+  // Reset quiz & result
+  document.getElementById('quizArea').innerHTML = '';
+  document.getElementById('quizArea').classList.remove('show');
+  document.getElementById('resultBanner').classList.remove('show');
+  document.getElementById('saveArea').style.display = 'none';
+  resetTimer();
+}
+
+function loadRandomText() {
+  const sel = document.getElementById('textSelect');
+  sel.value = Math.floor(Math.random() * TEXTS.length);
+  loadText();
+}
+
+function renderText() {
+  if (!currentText) return;
+  const showSlash = document.getElementById('slashToggle').checked;
+  const meta = document.getElementById('textMeta');
+  meta.innerHTML = `<span>${currentText.topic}</span><span>${currentText.wordCount} words</span><span>${currentText.difficulty}</span>`;
+
+  const body = document.getElementById('textBody');
+  if (showSlash) {
+    body.innerHTML = currentText.slashed.split('\n').map(para => {
+      if (!para.trim()) return '';
+      return '<p style="margin-bottom:12px">' + para.replace(/ \/ /g, ' <span class="slash-mark">/</span> ') + '</p>';
+    }).join('');
+  } else {
+    body.innerHTML = currentText.plain.split('\n').map(para => {
+      if (!para.trim()) return '';
+      return '<p style="margin-bottom:12px">' + para + '</p>';
+    }).join('');
+  }
+}
+
+function toggleBlur() {
+  const area = document.getElementById('readingArea');
+  if (document.getElementById('blurToggle').checked) {
+    area.classList.add('blur-text');
+  } else {
+    area.classList.remove('blur-text');
+  }
+}
+
+// =====================
+// TIMER
+// =====================
+function startReading() {
+  document.getElementById('readingArea').classList.remove('blur-text');
+  document.getElementById('blurToggle').checked = false;
+  startTime = Date.now() - elapsedMs;
+  timerInterval = setInterval(() => {
+    elapsedMs = Date.now() - startTime;
+    document.getElementById('timerDisplay').textContent = formatTime(elapsedMs);
+  }, 100);
+  document.getElementById('btnStart').style.display = 'none';
+  document.getElementById('btnStop').style.display = 'inline-flex';
+}
+
+function stopReading() {
+  clearInterval(timerInterval);
+  const seconds = elapsedMs / 1000;
+  currentWpm = Math.round(currentText.wordCount / seconds * 60);
+
+  const diff = currentWpm - progressData.baseline.wpm;
+  const diffText = diff >= 0 ? `+${diff}` : `${diff}`;
+
+  document.getElementById('resultWpm').textContent = currentWpm + ' WPM';
+  document.getElementById('resultDetail').textContent =
+    `${currentText.wordCount}語 / ${formatTime(elapsedMs)} | ベースライン比: ${diffText} WPM`;
+  document.getElementById('resultBanner').classList.add('show');
+
+  document.getElementById('btnStop').style.display = 'none';
+  document.getElementById('btnStart').style.display = 'inline-flex';
+}
+
+function resetTimer() {
+  clearInterval(timerInterval);
+  elapsedMs = 0;
+  document.getElementById('timerDisplay').textContent = '0:00.0';
+  document.getElementById('resultBanner').classList.remove('show');
+  document.getElementById('btnStop').style.display = 'none';
+  document.getElementById('btnStart').style.display = 'inline-flex';
+}
+
+function formatTime(ms) {
+  const s = ms / 1000;
+  return `${Math.floor(s/60)}:${Math.floor(s%60).toString().padStart(2,'0')}.${Math.floor((s%1)*10)}`;
+}
+
+// =====================
+// QUIZ
+// =====================
+function showQuiz() {
+  if (!currentText || !currentText.quiz) return;
+  const area = document.getElementById('quizArea');
+  quizScore = 0;
+  let html = '<div class="section"><h2>📝 理解度チェック</h2>';
+  currentText.quiz.forEach((q, qi) => {
+    html += `<div class="quiz-q" id="qq${qi}">
+      <div class="q-label">Q${qi+1}</div>
+      <div class="q-text">${q.q}</div>
+      <div class="quiz-options">`;
+    q.opts.forEach((opt, oi) => {
+      html += `<button class="quiz-opt" data-q="${qi}" data-o="${oi}" onclick="answerQuiz(${qi},${oi},this)">${opt}</button>`;
+    });
+    html += '</div></div>';
+  });
+  html += `<div style="text-align:center;margin-top:12px">
+    <button class="btn btn-success" id="btnSubmitQuiz" onclick="submitQuiz()" disabled>回答を確定する</button>
+  </div></div>`;
+  area.innerHTML = html;
+  area.classList.add('show');
+  area.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+let quizAnswers = {};
+function answerQuiz(qi, oi, el) {
+  // Deselect siblings
+  el.parentElement.querySelectorAll('.quiz-opt').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  quizAnswers[qi] = oi;
+  // Enable submit if all answered
+  if (Object.keys(quizAnswers).length === currentText.quiz.length) {
+    document.getElementById('btnSubmitQuiz').disabled = false;
+  }
+}
+
+function submitQuiz() {
+  quizScore = 0;
+  currentText.quiz.forEach((q, qi) => {
+    const btns = document.querySelectorAll(`[data-q="${qi}"]`);
+    btns.forEach(b => {
+      b.disabled = true;
+      const oi = parseInt(b.dataset.o);
+      if (oi === q.correct) b.classList.add('correct');
+      if (quizAnswers[qi] === oi && oi !== q.correct) b.classList.add('wrong');
+    });
+    if (quizAnswers[qi] === q.correct) quizScore++;
+  });
+  const total = currentText.quiz.length;
+  const pct = Math.round(quizScore / total * 100);
+  document.getElementById('btnSubmitQuiz').outerHTML =
+    `<div style="font-size:18px;font-weight:700;color:var(--primary);margin-top:8px">
+      正解: ${quizScore}/${total}（${pct}%）
+    </div>`;
+  document.getElementById('saveArea').style.display = 'block';
+  document.getElementById('saveArea').scrollIntoView({ behavior: 'smooth' });
+}
+
+// =====================
+// SAVE
+// =====================
+function saveSession() {
+  const today = new Date().toISOString().split('T')[0];
+  const dayNum = progressData.sessions.length + 1;
+  const compPct = currentText.quiz ? Math.round(quizScore / currentText.quiz.length * 100) : 100;
+
+  progressData.sessions.push({
+    date: today, day: dayNum, phase: getPhaseLabel(today), wpm: currentWpm,
+    comprehension_score: compPct, text_topic: currentText.title, word_count: currentText.wordCount
+  });
+
+  updateDashboard();
+  document.getElementById('saveArea').innerHTML =
+    '<div style="color:var(--success);font-weight:700;font-size:15px;padding:12px">✓ 記録を保存しました！</div>';
+}
+
+function getPhaseLabel(d) {
+  const diff = Math.floor((new Date(d) - new Date('2026-03-26')) / 86400000);
+  if (diff < 31) return '1ヶ月目: スラッシュ';
+  if (diff < 61) return '2ヶ月目: チャンク';
+  return '3ヶ月目: 多読';
+}
+
+// =====================
+// PHASE INSTRUCTION
+// =====================
+function updatePhaseInstruction() {
+  const diff = Math.floor((new Date() - new Date('2026-03-26')) / 86400000);
+  const el = document.getElementById('phaseInstruction');
+  if (diff < 31) {
+    el.innerHTML = '<strong>1ヶ月目: スラッシュリーディング</strong><br>「スラッシュ表示」をONにして、スラッシュごとに前から意味をとってください。<strong>絶対に返り読みしない</strong>ことだけを意識！読了後に理解度クイズで確認します。';
+  } else if (diff < 61) {
+    el.innerHTML = '<strong>2ヶ月目: チャンクリーディング</strong><br>スラッシュ表示はOFFで、より広い意味のかたまりを一度に捉える練習です。知らない単語は文脈から推測して立ち止まらずに。';
+    el.className = 'callout callout-purple';
+  } else {
+    el.innerHTML = '<strong>3ヶ月目: タイムアタック</strong><br>テキスト非表示をONにして、スタートと同時に読み始めてください。まず大意をつかみ、クイズ後にもう一度精読しましょう。';
+  }
+}
+
+// =====================
+// TABS
+// =====================
+function switchTab(name, el) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  el.classList.add('active');
+  if (name === 'chart') renderChart();
+}
+
+// =====================
+// DASHBOARD
+// =====================
+function updateDashboard() {
+  const sessions = progressData.sessions;
+  const latest = sessions[sessions.length - 1];
+  const bl = progressData.baseline.wpm;
+  const tgt = progressData.project.target_wpm;
+
+  document.getElementById('currentWpm').textContent = latest.wpm;
+  document.getElementById('totalDays').textContent = sessions.length;
+  document.getElementById('progressPct').textContent =
+    Math.max(0, Math.round((latest.wpm - bl) / (tgt - bl) * 100)) + '%';
+  document.getElementById('daysLeft').textContent =
+    Math.max(0, Math.ceil((new Date('2026-06-26') - new Date()) / 86400000));
+
+  // History
+  const tbody = document.getElementById('historyBody');
+  tbody.innerHTML = '';
+  [...sessions].reverse().forEach(s => {
+    const d = s.wpm - bl;
+    const cls = d > 0 ? 'badge-up' : d < 0 ? 'badge-down' : 'badge-same';
+    tbody.innerHTML += `<tr><td>${s.date}</td><td>${s.day}</td>
+      <td>${s.wpm} <span class="badge ${cls}">${d>=0?'+':''}${d}</span></td>
+      <td>${s.comprehension_score}%</td><td>${s.text_topic||''}</td></tr>`;
+  });
+
+  // Streak
+  const container = document.getElementById('streakDisplay');
+  container.innerHTML = '';
+  const start = new Date('2026-03-26'), today = new Date();
+  const dates = new Set(sessions.map(s => s.date));
+  const todayStr = today.toISOString().split('T')[0];
+  for (let i = 0; i < 92; i++) {
+    const dd = new Date(start); dd.setDate(dd.getDate() + i);
+    const ds = dd.toISOString().split('T')[0];
+    const div = document.createElement('div');
+    div.className = 'streak-day';
+    if (dates.has(ds)) div.classList.add('done');
+    if (ds === todayStr) div.classList.add('today');
+    div.title = ds;
+    container.appendChild(div);
+  }
+}
+
+// =====================
+// CHART
+// =====================
+let chartInst = null;
+function renderChart() {
+  const ctx = document.getElementById('wpmChart').getContext('2d');
+  if (chartInst) chartInst.destroy();
+  const s = progressData.sessions;
+  chartInst = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: s.map(x => x.date),
+      datasets: [
+        { label: 'WPM', data: s.map(x => x.wpm), borderColor: '#2563eb', backgroundColor: 'rgba(37,99,235,0.1)', fill: true, tension: 0.3, pointRadius: 5, yAxisID: 'y' },
+        { label: '理解度 (%)', data: s.map(x => x.comprehension_score), borderColor: '#16a34a', borderDash: [5,5], tension: 0.3, pointRadius: 4, yAxisID: 'y1' }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      scales: {
+        y: { min: 100, max: 220, title: { display: true, text: 'WPM' } },
+        y1: { position: 'right', min: 0, max: 100, title: { display: true, text: '理解度 (%)' }, grid: { drawOnChartArea: false } }
+      }
+    }
+  });
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+{
+  "name": "english-reading-trainer",
+  "version": "1.0.0",
+  "description": "英語読解スピード向上トレーナー - 3ヶ月で138→180 WPMを目指す学習アプリ",
+  "private": true,
+  "scripts": {
+    "dev": "npx serve .",
+    "build": "echo 'Static site - no build needed'"
+  }
+}
