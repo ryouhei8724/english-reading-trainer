@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>英語読解スピード向上トレーナー</title>
+<style>
+:root {
+  --primary: #2563eb; --primary-light: #dbeafe; --primary-dark: #1d4ed8;
+  --success: #16a34a; --success-light: #dcfce7;
+  --warning: #f59e0b; --warning-light: #fef3c7;
+  --danger: #dc2626; --danger-light: #fee2e2;
+  --purple: #7c3aed; --purple-light: #ede9fe;
+  --bg: #f8fafc; --card: #ffffff; --text: #1e293b; --text-light: #64748b; --border: #e2e8f0;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Segoe UI', 'Meiryo UI', sans-serif; background: var(--bg); color: var(--text); }
+
+.header { background: linear-gradient(135deg, var(--primary), var(--purple)); color: white; padding: 20px 32px; }
+.header h1 { font-size: 20px; margin-bottom: 2px; }
+.header p { opacity: 0.85; font-size: 13px; }
+
+.container { max-width: 1000px; margin: 0 auto; padding: 20px 16px; }
+
+.stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
+.stat-card { background: var(--card); border-radius: 10px; padding: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); text-align: center; }
+.stat-card .label { font-size: 11px; color: var(--text-light); }
+.stat-card .value { font-size: 26px; font-weight: 700; color: var(--primary); }
+.stat-card .sub { font-size: 10px; color: var(--text-light); }
+
+.tabs { display: flex; gap: 4px; margin-bottom: 16px; flex-wrap: wrap; }
+.tab { padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; background: transparent; border: none; color: var(--text-light); transition: all 0.15s; }
+.tab.active { background: var(--primary); color: white; }
+.tab:hover:not(.active) { background: var(--primary-light); }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+.section { background: var(--card); border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); margin-bottom: 16px; }
+.section h2 { font-size: 16px; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+
+/* Reading area */
+.text-selector { display: flex; gap: 8px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; }
+.text-selector select { padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; font-family: inherit; flex: 1; min-width: 200px; }
+
+.reading-area {
+  background: #fefefe; border: 1px solid var(--border); border-radius: 10px; padding: 24px 28px;
+  font-size: 17px; line-height: 2; color: #1a1a1a; position: relative; min-height: 200px;
+  font-family: Georgia, 'Times New Roman', serif; letter-spacing: 0.01em;
+}
+.reading-area.blur-text .text-body { filter: blur(6px); user-select: none; transition: filter 0.3s; }
+.reading-area .text-meta { font-family: 'Segoe UI', 'Meiryo UI', sans-serif; font-size: 13px; color: var(--text-light); margin-bottom: 12px; display: flex; gap: 16px; flex-wrap: wrap; }
+.reading-area .text-meta span { background: var(--primary-light); padding: 2px 10px; border-radius: 12px; font-weight: 600; font-size: 12px; }
+
+.slash-mark { color: var(--primary); font-weight: 700; font-size: 18px; margin: 0 2px; }
+.chunk-highlight { background: var(--warning-light); border-radius: 3px; padding: 0 2px; }
+
+.reading-controls { display: flex; gap: 8px; margin-top: 16px; align-items: center; flex-wrap: wrap; }
+
+.timer-bar {
+  display: flex; align-items: center; gap: 12px; background: var(--primary-light); border-radius: 10px;
+  padding: 12px 20px; margin-bottom: 16px;
+}
+.timer-bar .timer-display { font-size: 32px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--primary); }
+.timer-bar .timer-label { font-size: 12px; color: var(--text-light); }
+
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 20px; border-radius: 8px; border: none; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+.btn-primary { background: var(--primary); color: white; }
+.btn-primary:hover { background: var(--primary-dark); }
+.btn-success { background: var(--success); color: white; }
+.btn-success:hover { background: #15803d; }
+.btn-warning { background: var(--warning); color: white; }
+.btn-purple { background: var(--purple); color: white; }
+.btn-outline { background: transparent; border: 2px solid var(--border); color: var(--text); }
+.btn-outline:hover { border-color: var(--primary); color: var(--primary); }
+.btn-sm { padding: 6px 14px; font-size: 12px; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Quiz */
+.quiz-area { display: none; margin-top: 20px; }
+.quiz-area.show { display: block; }
+.quiz-q { margin-bottom: 16px; padding: 14px; background: var(--bg); border-radius: 8px; }
+.quiz-q .q-label { font-size: 13px; font-weight: 700; color: var(--primary); margin-bottom: 6px; }
+.quiz-q .q-text { font-size: 14px; margin-bottom: 8px; }
+.quiz-options { display: flex; flex-direction: column; gap: 6px; }
+.quiz-opt { padding: 8px 12px; border: 2px solid var(--border); border-radius: 8px; cursor: pointer; font-size: 13px; transition: all 0.15s; text-align: left; background: white; }
+.quiz-opt:hover { border-color: var(--primary); background: var(--primary-light); }
+.quiz-opt.selected { border-color: var(--primary); background: var(--primary-light); font-weight: 600; }
+.quiz-opt.correct { border-color: var(--success); background: var(--success-light); }
+.quiz-opt.wrong { border-color: var(--danger); background: var(--danger-light); }
+
+.result-banner {
+  display: none; margin-top: 16px; padding: 20px; border-radius: 10px; text-align: center;
+  background: linear-gradient(135deg, var(--primary-light), var(--purple-light));
+}
+.result-banner.show { display: block; }
+.result-banner .big { font-size: 40px; font-weight: 700; color: var(--primary); }
+.result-banner .detail { font-size: 14px; color: var(--text-light); margin-top: 4px; }
+
+/* Phase bar */
+.phase-bar { display: flex; border-radius: 8px; overflow: hidden; height: 28px; margin-bottom: 6px; }
+.phase-bar div { display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: white; }
+.phase1 { background: #3b82f6; } .phase2 { background: #8b5cf6; } .phase3 { background: #ec4899; }
+.phase-labels { display: flex; font-size: 10px; color: var(--text-light); }
+.phase-labels span { flex: 1; }
+
+/* Chart */
+.chart-container { position: relative; height: 250px; }
+canvas { width: 100% !important; }
+
+/* History */
+.history-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.history-table th { text-align: left; padding: 8px; border-bottom: 2px solid var(--border); color: var(--text-light); }
+.history-table td { padding: 8px; border-bottom: 1px solid var(--border); }
+.history-table tr:hover { background: var(--primary-light); }
+.badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 600; }
+.badge-up { background: #dcfce7; color: #166534; }
+.badge-down { background: #fee2e2; color: #991b1b; }
+.badge-same { background: #f1f5f9; color: #475569; }
+
+/* Streak */
+.streak-display { display: flex; gap: 3px; flex-wrap: wrap; }
+.streak-day { width: 14px; height: 14px; border-radius: 3px; background: var(--border); }
+.streak-day.done { background: var(--success); }
+.streak-day.today { border: 2px solid var(--warning); }
+
+/* Instruction callout */
+.callout { padding: 12px 16px; border-radius: 8px; font-size: 13px; line-height: 1.6; margin-bottom: 14px; }
+.callout-blue { background: var(--primary-light); border-left: 4px solid var(--primary); }
+.callout-purple { background: var(--purple-light); border-left: 4px solid var(--purple); }
+
+.toggle-row { display: flex; gap: 8px; margin-bottom: 12px; align-items: center; flex-wrap: wrap; }
+.toggle-label { font-size: 12px; color: var(--text-light); }
+.toggle { position: relative; width: 40px; height: 22px; cursor: pointer; }
+.toggle input { opacity: 0; width: 0; height: 0; }
+.toggle .slider { position: absolute; inset: 0; background: var(--border); border-radius: 22px; transition: 0.2s; }
+.toggle .slider::before { content: ''; position: absolute; width: 16px; height: 16px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: 0.2s; }
+.toggle input:checked + .slider { background: var(--primary); }
+.toggle input:checked + .slider::before { transform: translateX(18px); }
+
+@media (max-width: 640px) {
+  .stats-row { grid-template-columns: repeat(2, 1fr); }
+  .reading-area { padding: 16px; font-size: 15px; }
+  .timer-bar .timer-display { font-size: 24px; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>英語読解スピード向上トレーナー</h1>
+  <p>涼平さんの3ヶ月チャレンジ（138 → 180 WPM）</p>
+</div>
+
+<div class="container">
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="label">現在のWPM</div>
+      <div class="value" id="currentWpm">138</div>
+      <div class="sub">目標: 180 WPM</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">学習日数</div>
+      <div class="value" id="totalDays">1</div>
+      <div class="sub" id="streakSub">連続: 1日</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">達成率</div>
+      <div class="value" id="progressPct">0%</div>
+      <div class="sub">138 → 180</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">残り日数</div>
+      <div class="value" id="daysLeft">92</div>
+      <div class="sub">2026/6/26まで</div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('reading',this)">📖 今日の英文</button>
+    <button class="tab" onclick="switchTab('chart',this)">📈 推移グラフ</button>
+    <button class="tab" onclick="switchTab('history',this)">📋 学習履歴</button>
+    <button class="tab" onclick="switchTab('streak',this)">🔥 継続記録</button>
+    <button class="tab" onclick="switchTab('phase',this)">📅 フェーズ</button>
+  </div>
+
+  <!-- ===== READING TAB ===== -->
+  <div id="tab-reading" class="tab-content active">
+    <div class="section">
+      <h2>📖 今日のリーディング</h2>
+
+      <div class="callout callout-blue" id="phaseInstruction"></div>
+
+      <div class="text-selector">
+        <select id="textSelect" onchange="loadText()"></select>
+        <button class="btn btn-outline btn-sm" onclick="loadRandomText()">ランダム選択</button>
+        <button class="btn btn-purple btn-sm" id="btnGenerate" onclick="generateText()">✨ AI生成</button>
+      </div>
+
+      <div class="toggle-row">
+        <label class="toggle"><input type="checkbox" id="slashToggle" onchange="renderText()"><span class="slider"></span></label>
+        <span class="toggle-label">スラッシュ表示</span>
+        <label class="toggle"><input type="checkbox" id="blurToggle" onchange="toggleBlur()"><span class="slider"></span></label>
+        <span class="toggle-label">テキスト非表示（タイマー開始で表示）</span>
+      </div>
+
+      <!-- Timer Bar -->
+      <div class="timer-bar">
+        <div>
+          <div class="timer-label">経過時間</div>
+          <div class="timer-display" id="timerDisplay">0:00.0</div>
+        </div>
+        <div style="flex:1"></div>
+        <button class="btn btn-primary" id="btnStart" onclick="startReading()">▶ 読み始める</button>
+        <button class="btn btn-success" id="btnStop" onclick="stopReading()" style="display:none">■ 読了</button>
+        <button class="btn btn-outline btn-sm" onclick="resetTimer()">リセット</button>
+      </div>
+
+      <!-- Reading Area -->
+      <div class="reading-area" id="readingArea">
+        <div class="text-meta" id="textMeta"></div>
+        <div class="text-body" id="textBody"></div>
+      </div>
+
+      <!-- Result Banner -->
+      <div class="result-banner" id="resultBanner">
+        <div>今回の計測結果</div>
+        <div class="big" id="resultWpm">—</div>
+        <div class="detail" id="resultDetail"></div>
+        <button class="btn btn-purple" style="margin-top:12px" onclick="showQuiz()">理解度チェックへ →</button>
+      </div>
+
+      <!-- Quiz Area -->
+      <div class="quiz-area" id="quizArea"></div>
+
+      <!-- Save -->
+      <div id="saveArea" style="display:none;text-align:center;margin-top:16px">
+        <button class="btn btn-success" onclick="saveSession()">この記録を保存する</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== CHART TAB ===== -->
+  <div id="tab-chart" class="tab-content">
+    <div class="section">
+      <h2>📈 WPM推移グラフ</h2>
+      <div class="chart-container"><canvas id="wpmChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- ===== HISTORY TAB ===== -->
+  <div id="tab-history" class="tab-content">
+    <div class="section">
+      <h2>📋 学習履歴</h2>
+      <table class="history-table">
+        <thead><tr><th>日付</th><th>Day</th><th>WPM</th><th>理解度</th><th>トピック</th></tr></thead>
+        <tbody id="historyBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ===== STREAK TAB ===== -->
+  <div id="tab-streak" class="tab-content">
+    <div class="section">
+      <h2>🔥 継続記録</h2>
+      <p style="font-size:12px;color:var(--text-light);margin-bottom:10px;">緑=学習した日 / 黄枠=今日</p>
+      <div class="streak-display" id="streakDisplay"></div>
+    </div>
+  </div>
+
+  <!-- ===== PHASE TAB ===== -->
+  <div id="tab-phase" class="tab-content">
+    <div class="section">
+      <h2>📅 3ヶ月計画</h2>
+      <div class="phase-bar">
+        <div class="phase1" style="width:33.3%">1ヶ月目: スラッシュ</div>
+        <div class="phase2" style="width:33.3%">2ヶ月目: チャンク</div>
+        <div class="phase3" style="width:33.4%">3ヶ月目: 多読</div>
+      </div>
+      <div class="phase-labels"><span>3/26</span><span style="text-align:center">4/26</span><span style="text-align:center">5/26</span><span style="text-align:right">6/26</span></div>
+      <div style="margin-top:16px">
+        <div class="callout callout-blue"><strong>1ヶ月目（〜4/26）: スラッシュリーディング</strong><br>意味のカタマリごとにスラッシュで区切り、英語の語順のまま前から理解する訓練。絶対に返り読みしない。</div>
+        <div class="callout callout-purple"><strong>2ヶ月目（〜5/26）: チャンクリーディング＋語彙強化</strong><br>スラッシュの幅を広げ、一度に捉える語数を増やす。頻出専門語彙をストック。</div>
+        <div class="callout callout-blue"><strong>3ヶ月目（〜6/26）: タイムアタック＋多読</strong><br>制限時間を設けてスキミング→精読。長めのドキュメントで実践力を磨く。</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+// =====================
+// STATE
+// =====================
+let TEXTS = [];
+let sessions = [];
+const BASELINE_WPM = 138;
+const TARGET_WPM = 180;
+const START_DATE = '2026-03-26';
+const END_DATE = '2026-06-26';
+
+let currentText = null;
+let timerInterval = null;
+let startTime = 0;
+let elapsedMs = 0;
+let currentWpm = 0;
+let quizScore = 0;
+let quizAnswers = {};
+
+// =====================
+// API HELPERS
+// =====================
+async function apiFetch(path, options = {}) {
+  const res = await fetch(path, {
+    headers: { 'Content-Type': 'application/json' },
+    ...options
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || err.error || `HTTP ${res.status}`);
+  }
+  return res.json();
+}
+
+// =====================
+// INIT
+// =====================
+window.addEventListener('DOMContentLoaded', async () => {
+  updatePhaseInstruction();
+  await Promise.all([loadTexts(), loadSessions()]);
+});
+
+async function loadTexts() {
+  try {
+    const data = await apiFetch('/api/texts?limit=50');
+    TEXTS = data.texts.map(t => ({
+      id: t.id,
+      title: t.title,
+      topic: t.topic,
+      wordCount: t.word_count,
+      difficulty: t.difficulty,
+      plain: t.plain_text,
+      slashed: t.slashed_text,
+      quiz: t.quiz_json,
+      phase: t.phase
+    }));
+    populateTextSelector();
+    if (TEXTS.length > 0) loadText();
+    else document.getElementById('textBody').innerHTML = '<p style="color:var(--text-light)">英文がまだありません。「✨ AI生成」ボタンで作成してください。</p>';
+  } catch (err) {
+    console.error('テキスト取得失敗:', err);
+    document.getElementById('textBody').innerHTML = `<p style="color:var(--danger)">英文の読み込みに失敗しました: ${err.message}</p>`;
+  }
+}
+
+async function loadSessions() {
+  try {
+    const data = await apiFetch('/api/sessions');
+    sessions = data.sessions;
+    updateDashboard();
+  } catch (err) {
+    console.error('セッション取得失敗:', err);
+  }
+}
+
+// =====================
+// TEXT SELECTOR
+// =====================
+function populateTextSelector() {
+  const sel = document.getElementById('textSelect');
+  sel.innerHTML = TEXTS.map((t, i) =>
+    `<option value="${i}">${t.title} (${t.wordCount}語)</option>`
+  ).join('');
+}
+
+function loadText() {
+  const idx = parseInt(document.getElementById('textSelect').value) || 0;
+  currentText = TEXTS[idx] || null;
+  renderText();
+  // Reset state
+  document.getElementById('resultBanner').classList.remove('show');
+  document.getElementById('quizArea').innerHTML = '';
+  document.getElementById('quizArea').classList.remove('show');
+  document.getElementById('saveArea').style.display = 'none';
+  resetTimer();
+}
+
+function loadRandomText() {
+  if (TEXTS.length === 0) return;
+  const sel = document.getElementById('textSelect');
+  sel.value = Math.floor(Math.random() * TEXTS.length);
+  loadText();
+}
+
+// =====================
+// AI GENERATE
+// =====================
+async function generateText() {
+  const btn = document.getElementById('btnGenerate');
+  btn.disabled = true;
+  btn.textContent = '生成中...';
+
+  const topic = prompt('トピックを入力（空欄でAIにおまかせ）:');
+  if (topic === null) { // cancelled
+    btn.disabled = false;
+    btn.textContent = '✨ AI生成';
+    return;
+  }
+
+  const today = new Date().toISOString().split('T')[0];
+  const phase = getPhaseLabel(today);
+
+  try {
+    const data = await apiFetch('/api/generate-text', {
+      method: 'POST',
+      body: JSON.stringify({ topic: topic.trim(), phase })
+    });
+    const t = data.text;
+    TEXTS.unshift({
+      id: t.id, title: t.title, topic: t.topic,
+      wordCount: t.word_count, difficulty: t.difficulty,
+      plain: t.plain_text, slashed: t.slashed_text,
+      quiz: t.quiz_json, phase: t.phase
+    });
+    populateTextSelector();
+    document.getElementById('textSelect').value = 0;
+    loadText();
+    alert(`「${t.title}」を生成しました！`);
+  } catch (err) {
+    alert('生成に失敗しました: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '✨ AI生成';
+  }
+}
+
+// =====================
+// RENDER TEXT
+// =====================
+function renderText() {
+  if (!currentText) return;
+  const showSlash = document.getElementById('slashToggle').checked;
+  const meta = document.getElementById('textMeta');
+  meta.innerHTML = `<span>${currentText.topic}</span><span>${currentText.wordCount} words</span><span>${currentText.difficulty}</span>`;
+
+  const body = document.getElementById('textBody');
+  const src = showSlash ? currentText.slashed : currentText.plain;
+  body.innerHTML = src.split('\n').map(para => {
+    if (!para.trim()) return '';
+    if (showSlash) {
+      return '<p style="margin-bottom:12px">' + para.replace(/ \/ /g, ' <span class="slash-mark">/</span> ') + '</p>';
+    }
+    return '<p style="margin-bottom:12px">' + para + '</p>';
+  }).join('');
+}
+
+function toggleBlur() {
+  const area = document.getElementById('readingArea');
+  if (document.getElementById('blurToggle').checked) {
+    area.classList.add('blur-text');
+  } else {
+    area.classList.remove('blur-text');
+  }
+}
+
+// =====================
+// TIMER
+// =====================
+function startReading() {
+  document.getElementById('readingArea').classList.remove('blur-text');
+  document.getElementById('blurToggle').checked = false;
+  startTime = Date.now() - elapsedMs;
+  timerInterval = setInterval(() => {
+    elapsedMs = Date.now() - startTime;
+    document.getElementById('timerDisplay').textContent = formatTime(elapsedMs);
+  }, 100);
+  document.getElementById('btnStart').style.display = 'none';
+  document.getElementById('btnStop').style.display = 'inline-flex';
+}
+
+function stopReading() {
+  clearInterval(timerInterval);
+  const seconds = elapsedMs / 1000;
+  currentWpm = Math.round(currentText.wordCount / seconds * 60);
+
+  const diff = currentWpm - BASELINE_WPM;
+  const diffText = diff >= 0 ? `+${diff}` : `${diff}`;
+
+  document.getElementById('resultWpm').textContent = currentWpm + ' WPM';
+  document.getElementById('resultDetail').textContent =
+    `${currentText.wordCount}語 / ${formatTime(elapsedMs)} | ベースライン比: ${diffText} WPM`;
+  document.getElementById('resultBanner').classList.add('show');
+
+  document.getElementById('btnStop').style.display = 'none';
+  document.getElementById('btnStart').style.display = 'inline-flex';
+}
+
+function resetTimer() {
+  clearInterval(timerInterval);
+  elapsedMs = 0;
+  document.getElementById('timerDisplay').textContent = '0:00.0';
+  document.getElementById('resultBanner').classList.remove('show');
+  document.getElementById('btnStop').style.display = 'none';
+  document.getElementById('btnStart').style.display = 'inline-flex';
+}
+
+function formatTime(ms) {
+  const s = ms / 1000;
+  return `${Math.floor(s/60)}:${Math.floor(s%60).toString().padStart(2,'0')}.${Math.floor((s%1)*10)}`;
+}
+
+// =====================
+// QUIZ
+// =====================
+function showQuiz() {
+  if (!currentText || !currentText.quiz) return;
+  const area = document.getElementById('quizArea');
+  quizScore = 0;
+  quizAnswers = {};
+  let html = '<div class="section"><h2>📝 理解度チェック</h2>';
+  currentText.quiz.forEach((q, qi) => {
+    html += `<div class="quiz-q" id="qq${qi}">
+      <div class="q-label">Q${qi+1}</div>
+      <div class="q-text">${q.q}</div>
+      <div class="quiz-options">`;
+    q.opts.forEach((opt, oi) => {
+      html += `<button class="quiz-opt" data-q="${qi}" data-o="${oi}" onclick="answerQuiz(${qi},${oi},this)">${opt}</button>`;
+    });
+    html += '</div></div>';
+  });
+  html += `<div style="text-align:center;margin-top:12px">
+    <button class="btn btn-success" id="btnSubmitQuiz" onclick="submitQuiz()" disabled>回答を確定する</button>
+  </div></div>`;
+  area.innerHTML = html;
+  area.classList.add('show');
+  area.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function answerQuiz(qi, oi, el) {
+  el.parentElement.querySelectorAll('.quiz-opt').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  quizAnswers[qi] = oi;
+  if (Object.keys(quizAnswers).length === currentText.quiz.length) {
+    document.getElementById('btnSubmitQuiz').disabled = false;
+  }
+}
+
+function submitQuiz() {
+  quizScore = 0;
+  currentText.quiz.forEach((q, qi) => {
+    const btns = document.querySelectorAll(`[data-q="${qi}"]`);
+    btns.forEach(b => {
+      b.disabled = true;
+      const oi = parseInt(b.dataset.o);
+      if (oi === q.correct) b.classList.add('correct');
+      if (quizAnswers[qi] === oi && oi !== q.correct) b.classList.add('wrong');
+    });
+    if (quizAnswers[qi] === q.correct) quizScore++;
+  });
+  const total = currentText.quiz.length;
+  const pct = Math.round(quizScore / total * 100);
+  document.getElementById('btnSubmitQuiz').outerHTML =
+    `<div style="font-size:18px;font-weight:700;color:var(--primary);margin-top:8px">
+      正解: ${quizScore}/${total}（${pct}%）
+    </div>`;
+  document.getElementById('saveArea').style.display = 'block';
+  document.getElementById('saveArea').scrollIntoView({ behavior: 'smooth' });
+}
+
+// =====================
+// SAVE SESSION
+// =====================
+async function saveSession() {
+  const today = new Date().toISOString().split('T')[0];
+  const compPct = currentText.quiz ? Math.round(quizScore / currentText.quiz.length * 100) : 100;
+  const phase = getPhaseLabel(today);
+
+  try {
+    const data = await apiFetch('/api/sessions', {
+      method: 'POST',
+      body: JSON.stringify({
+        text_id: currentText.id || null,
+        date: today,
+        wpm: currentWpm,
+        comprehension_score: compPct,
+        reading_time_seconds: parseFloat((elapsedMs / 1000).toFixed(1)),
+        phase
+      })
+    });
+    sessions.unshift(data.session);
+    updateDashboard();
+    document.getElementById('saveArea').innerHTML =
+      '<div style="color:var(--success);font-weight:700;font-size:15px;padding:12px">✓ 記録を保存しました！</div>';
+  } catch (err) {
+    alert('保存に失敗しました: ' + err.message);
+  }
+}
+
+// =====================
+// PHASE
+// =====================
+function getPhaseLabel(d) {
+  const diff = Math.floor((new Date(d) - new Date(START_DATE)) / 86400000);
+  if (diff < 31) return '1ヶ月目: スラッシュ';
+  if (diff < 61) return '2ヶ月目: チャンク';
+  return '3ヶ月目: 多読';
+}
+
+function updatePhaseInstruction() {
+  const diff = Math.floor((new Date() - new Date(START_DATE)) / 86400000);
+  const el = document.getElementById('phaseInstruction');
+  if (diff < 31) {
+    el.innerHTML = '<strong>1ヶ月目: スラッシュリーディング</strong><br>「スラッシュ表示」をONにして、スラッシュごとに前から意味をとってください。<strong>絶対に返り読みしない</strong>ことだけを意識！読了後に理解度クイズで確認します。';
+    el.className = 'callout callout-blue';
+  } else if (diff < 61) {
+    el.innerHTML = '<strong>2ヶ月目: チャンクリーディング</strong><br>スラッシュ表示はOFFで、より広い意味のかたまりを一度に捉える練習です。知らない単語は文脈から推測して立ち止まらずに。';
+    el.className = 'callout callout-purple';
+  } else {
+    el.innerHTML = '<strong>3ヶ月目: タイムアタック</strong><br>テキスト非表示をONにして、スタートと同時に読み始めてください。まず大意をつかみ、クイズ後にもう一度精読しましょう。';
+    el.className = 'callout callout-blue';
+  }
+}
+
+// =====================
+// TABS
+// =====================
+function switchTab(name, el) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  el.classList.add('active');
+  if (name === 'chart') renderChart();
+}
+
+// =====================
+// DASHBOARD
+// =====================
+function updateDashboard() {
+  if (sessions.length === 0) return;
+  const latest = sessions[0];
+  const bl = BASELINE_WPM;
+  const tgt = TARGET_WPM;
+
+  document.getElementById('currentWpm').textContent = latest.wpm;
+  document.getElementById('totalDays').textContent = sessions.length;
+  document.getElementById('streakSub').textContent = `連続: ${calcStreak()}日`;
+  document.getElementById('progressPct').textContent =
+    Math.max(0, Math.round((latest.wpm - bl) / (tgt - bl) * 100)) + '%';
+  document.getElementById('daysLeft').textContent =
+    Math.max(0, Math.ceil((new Date(END_DATE) - new Date()) / 86400000));
+
+  // History table
+  const tbody = document.getElementById('historyBody');
+  tbody.innerHTML = '';
+  sessions.forEach((s, i) => {
+    const d = s.wpm - bl;
+    const cls = d > 0 ? 'badge-up' : d < 0 ? 'badge-down' : 'badge-same';
+    const dayNum = sessions.length - i;
+    tbody.innerHTML += `<tr>
+      <td>${s.date}</td><td>${dayNum}</td>
+      <td>${s.wpm} <span class="badge ${cls}">${d>=0?'+':''}${d}</span></td>
+      <td>${s.comprehension_score != null ? s.comprehension_score + '%' : '-'}</td>
+      <td>${s.text_title || s.topic || '-'}</td>
+    </tr>`;
+  });
+
+  // Streak calendar
+  const container = document.getElementById('streakDisplay');
+  container.innerHTML = '';
+  const start = new Date(START_DATE);
+  const dates = new Set(sessions.map(s => s.date?.split('T')[0] || s.date));
+  const todayStr = new Date().toISOString().split('T')[0];
+  for (let i = 0; i < 92; i++) {
+    const dd = new Date(start);
+    dd.setDate(dd.getDate() + i);
+    const ds = dd.toISOString().split('T')[0];
+    const div = document.createElement('div');
+    div.className = 'streak-day';
+    if (dates.has(ds)) div.classList.add('done');
+    if (ds === todayStr) div.classList.add('today');
+    div.title = ds;
+    container.appendChild(div);
+  }
+}
+
+function calcStreak() {
+  const dates = new Set(sessions.map(s => s.date?.split('T')[0] || s.date));
+  let streak = 0;
+  const d = new Date();
+  while (true) {
+    const ds = d.toISOString().split('T')[0];
+    if (!dates.has(ds)) break;
+    streak++;
+    d.setDate(d.getDate() - 1);
+  }
+  return streak;
+}
+
+// =====================
+// CHART
+// =====================
+let chartInst = null;
+function renderChart() {
+  const ctx = document.getElementById('wpmChart').getContext('2d');
+  if (chartInst) chartInst.destroy();
+  const s = [...sessions].reverse();
+  chartInst = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: s.map(x => x.date?.split('T')[0] || x.date),
+      datasets: [
+        { label: 'WPM', data: s.map(x => x.wpm), borderColor: '#2563eb', backgroundColor: 'rgba(37,99,235,0.1)', fill: true, tension: 0.3, pointRadius: 5, yAxisID: 'y' },
+        { label: '理解度 (%)', data: s.map(x => x.comprehension_score), borderColor: '#16a34a', borderDash: [5,5], tension: 0.3, pointRadius: 4, yAxisID: 'y1' }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      scales: {
+        y: { min: 100, max: 220, title: { display: true, text: 'WPM' } },
+        y1: { position: 'right', min: 0, max: 100, title: { display: true, text: '理解度 (%)' }, grid: { drawOnChartArea: false } }
+      }
+    }
+  });
+}
+</script>
+</body>
+</html>
