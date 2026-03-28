@@ -195,6 +195,9 @@ canvas { width: 100% !important; }
         <button class="btn btn-outline btn-sm" onclick="loadRandomText()">ランダム選択</button>
         <button class="btn btn-purple btn-sm" id="btnGenerate" onclick="generateText()">✨ AI生成</button>
       </div>
+      <div id="generateNotice" style="display:none;padding:10px 14px;background:#ede9fe;border-left:4px solid #7c3aed;border-radius:8px;font-size:13px;color:#5b21b6;margin-bottom:12px">
+        ⏳ AIが英文を生成しています。<strong>このページを閉じずに</strong>そのままお待ちください（通常10〜20秒）。
+      </div>
 
       <div class="toggle-row">
         <label class="toggle"><input type="checkbox" id="slashToggle" onchange="renderText()"><span class="slider"></span></label>
@@ -395,16 +398,14 @@ function loadRandomText() {
 // AI GENERATE
 // =====================
 async function generateText() {
+  const topic = prompt('トピックを入力（空欄でAIにおまかせ）:');
+  if (topic === null) return;
+
   const btn = document.getElementById('btnGenerate');
+  const notice = document.getElementById('generateNotice');
   btn.disabled = true;
   btn.textContent = '生成中...';
-
-  const topic = prompt('トピックを入力（空欄でAIにおまかせ）:');
-  if (topic === null) { // cancelled
-    btn.disabled = false;
-    btn.textContent = '✨ AI生成';
-    return;
-  }
+  notice.style.display = 'block';
 
   const today = new Date().toISOString().split('T')[0];
   const phase = getPhaseLabel(today);
@@ -429,7 +430,9 @@ async function generateText() {
     alert('生成に失敗しました: ' + err.message);
   } finally {
     btn.disabled = false;
+    btn.disabled = false;
     btn.textContent = '✨ AI生成';
+    notice.style.display = 'none';
   }
 }
 
